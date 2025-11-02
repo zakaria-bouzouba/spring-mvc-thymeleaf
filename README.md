@@ -104,8 +104,6 @@ public class Product {
     - `@Min(0)` pour le prix (non négatif).
     - `@Min(1)` pour la quantité (au moins 1).
 - Lombok (`@Getter`, `@Setter`, `@Builder`, etc.) réduit le code boilerplate.
-- Remarque : `price` et `quantity` sont typés `double` (on pourrait préférer `BigDecimal` pour les montants en
-  production).
 
 ---
 
