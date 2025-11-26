@@ -2,32 +2,57 @@
 <html lang="en"
       xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="layout1"
->
+      layout:decorate="layout1">
 <head>
     <meta charset="UTF-8">
-    <title>Products</title>
+    <title th:text="${product.id} != null ? 'Edit product' : 'New product'">Product</title>
 </head>
 <body>
- <div class="p-3" layout:fragment="content1">
-     <form method="post" th:action="@{/admin/saveProduct}">
-         <div class="mb-3">
-             <label class="form-label">Name</label>
-             <input class="form-control" type="text" name="name" th:value="${product.name}" >
-             <span class="text-danger" th:errors="${product.name}"></span>
-         </div>
-         <div class="mb-3">
-             <label class="form-label">Price</label>
-             <input class="form-control" type="text" name="price" th:value="${product.price}" >
-             <span class="text-danger" th:errors="${product.price}"></span>
-         </div>
-         <div class="mb-3">
-             <label class="form-label">Quantity</label>
-             <input class="form-control" type="text" name="quantity" th:value="${product.quantity}" >
-             <span class="text-danger" th:errors="${product.quantity}"></span>
-         </div>
-         <button type="submit" class="btn btn-primary">Save</button>
-     </form>
- </div>
+<div class="p-3" layout:fragment="content1">
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-8">
+            <div class="card card-compact">
+                <div class="card-header">
+                    <h5 class="mb-0" th:text="${product.id} != null ? 'Edit product' : 'New product'">New product</h5>
+                </div>
+                <div class="card-body">
+                    <form th:action="@{/admin/saveProduct}" method="post" th:object="${product}">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+                        <input type="hidden" th:if="${product.id != null}" th:field="*{id}"/>
+
+                        <div class="mb-3">
+                            <label class="form-label">Name</label>
+                            <input class="form-control" type="text" th:field="*{name}" placeholder="Product name"/>
+                            <div class="invalid-feedback d-block" th:if="${#fields.hasErrors('name')}"
+                                 th:errors="*{name}"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Price</label>
+                            <input class="form-control" type="number" step="0.01" th:field="*{price}"
+                                   placeholder="0.00"/>
+                            <div class="invalid-feedback d-block" th:if="${#fields.hasErrors('price')}"
+                                 th:errors="*{price}"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Quantity</label>
+                            <input class="form-control" type="number" th:field="*{quantity}" placeholder="0"/>
+                            <div class="invalid-feedback d-block" th:if="${#fields.hasErrors('quantity')}"
+                                 th:errors="*{quantity}"></div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a class="btn btn-outline-secondary" th:href="@{/user/index}">Back</a>
+                            <button type="submit" class="btn btn-primary">Save</button>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 </body>
 </html>

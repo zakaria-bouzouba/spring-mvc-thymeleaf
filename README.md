@@ -204,10 +204,13 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
+import java.util.Optional;
 
 @Controller
 public class ProductController {
@@ -241,12 +244,24 @@ public class ProductController {
         return "new-product";
     }
 
+    @GetMapping("/admin/edit/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public String editProductForm(@PathVariable Long id, Model model, RedirectAttributes redirectAttributes) {
+        Optional<Product> opt = productRepository.findById(id);
+        if (opt.isEmpty()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Product not found");
+            return "redirect:/user/index";
+        }
+        model.addAttribute("product", opt.get());
+        return "new-product";
+    }
+
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/admin/saveProduct")
     public String saveProduct(@Valid Product product, BindingResult bindingResult, Model model) {
         if (bindingResult.hasErrors()) return "new-product";
         productRepository.save(product);
-        return "redirect:/admin/newProduct";
+        return "redirect:/user/index";
     }
 
     @GetMapping("/notAuthorized")
@@ -269,13 +284,12 @@ public class ProductController {
 
 **Explication :**
 
-- Contrôleur Spring MVC annoté `@Controller`.
-- Routes principales :
-    - `/user/index` : accessible aux utilisateurs avec rôle `USER`, affiche la liste des produits.
-    - `/admin/newProduct`, `/admin/saveProduct`, `/admin/delete` : opérations accessibles uniquement au rôle `ADMIN` (
-      annotation `@PreAuthorize`).
-    - `/login`, `/logout`, `/notAuthorized` : gestion des pages de sécurité.
-- Validation server-side lors de l'enregistrement (`@Valid` + `BindingResult`).
+- `/user/index` → affichage de tous les produits (rôle USER ou ADMIN)
+- `/admin/newProduct` → formulaire d’ajout
+- `/admin/edit/{id}` → formulaire de modification (rempli automatiquement)
+- `/admin/saveProduct` → ajout ou édition selon présence de l’ID
+- `/admin/delete` → suppression du produit
+- Validation assurée par `@Valid` + `BindingResult`
 
 ---
 
@@ -344,70 +358,90 @@ spring.h2.console.enabled=true
 
 ```html
 <!DOCTYPE html>
-<html lang="en"
-      xmlns:th="http://www.thymeleaf.org"
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
->
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
-    <meta charset="UTF-8">
-    <title>Products</title>
-    <link rel="stylesheet" type="text/css" href="/webjars/bootstrap/5.3.5/css/bootstrap.min.css">
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title th:text="${pageTitle} ?: 'Products Management'">Products</title>
+    <link rel="stylesheet" href="/webjars/bootstrap/5.3.5/css/bootstrap.min.css"/>
+    <style>
+        body {
+            font-family: "Georgia", serif;
+            background: #f6f7fb;
+        }
+
+        .navbar-brand {
+            font-weight: 600;
+            letter-spacing: .5px;
+        }
+
+        .page-header {
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .card-compact {
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .table-actions button {
+            margin-right: .35rem;
+        }
+
+        .muted {
+            color: #6c757d;
+        }
+    </style>
     <script src="/webjars/bootstrap/5.3.5/js/bootstrap.bundle.js"></script>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar navbar-dark bg-primary">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="#">Navbar</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
-                aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+<nav class="navbar navbar-expand-lg navbar-dark" style="background:#1f497d;">
+    <div class="container">
+        <a class="navbar-brand" th:href="@{/}">Product Management</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
             <span class="navbar-toggler-icon"></span>
         </button>
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item">
-                    <a class="nav-link active" aria-current="page" th:href="@{/}">Home</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" th:href="@{/user/index}">Products</a>
-                </li>
+        <div class="collapse navbar-collapse" id="navMain">
+            <ul class="navbar-nav ms-auto">
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button"
-                       data-bs-toggle="dropdown" aria-expanded="false">
-                        Dropdown
+                    <a class="nav-link dropdown-toggle" href="#" id="userMenu" role="button" data-bs-toggle="dropdown">
+                        <span sec:authentication="name">User</span>
                     </a>
-                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                        <li><a class="dropdown-item" href="#">Action</a></li>
-                        <li><a class="dropdown-item" href="#">Another action</a></li>
-                        <li>
-                            <hr class="dropdown-divider">
-                        </li>
-                        <li><a class="dropdown-item" href="#">Something else here</a></li>
-                    </ul>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">Disabled</a>
-                </li>
-            </ul>
-            <ul class="navbar-nav">
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown2" role="button"
-                       data-bs-toggle="dropdown" aria-expanded="false">
-                        <span sec:authentication="name"></span>
-                    </a>
-                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
                         <li><a class="dropdown-item" th:href="@{/logout}">Logout</a></li>
                     </ul>
                 </li>
             </ul>
-
         </div>
     </div>
 </nav>
-<div layout:fragment="content1">
 
-</div>
-<footer></footer>
+<main class="container">
+    <header class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 th:text="${pageTitle} ?: 'Products'">Products</h1>
+                <p class="muted">Manage product catalog — add, edit or remove entries.</p>
+            </div>
+            <div>
+                <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+                <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+            </div>
+        </div>
+    </header>
+
+    <div layout:fragment="content1"></div>
+
+    <footer class="mt-5 mb-4 text-muted small">
+        <div class="d-flex justify-content-between">
+            <div>© <span th:text="${T(java.time.Year).now().value}"></span> Zakaria Bouzouba</div>
+            <div>Spring Boot + Thymeleaf</div>
+        </div>
+    </footer>
+</main>
 </body>
 </html>
 ```
@@ -427,29 +461,38 @@ spring.h2.console.enabled=true
 <html lang="en"
       xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
->
+      layout:decorate="layout1">
 <head>
-    <meta charset="UTF-8">
-    <title>Products</title>
-    <link rel="stylesheet" type="text/css" href="/webjars/bootstrap/5.3.5/css/bootstrap.min.css">
+    <meta charset="UTF-8"/>
+    <title>Login</title>
 </head>
 <body>
 <div class="p-3" layout:fragment="content1">
-    <div class="row">
-        <div class="col col-md-6 offset-3">
-            <div class="card">
-                <div class="card-header">Authentication</div>
+    <div class="row justify-content-center align-items-center" style="min-height:60vh;">
+        <div class="col-12 col-sm-10 col-md-6 col-lg-4">
+            <div class="card card-compact">
+                <div class="card-header" style="background:#f1f5f9;">
+                    <h5 class="mb-0">Sign in</h5>
+                    <div class="muted small">Access the product management panel</div>
+                </div>
+
                 <div class="card-body">
-                    <form method="post" th:action="@{/login}">
+                    <form th:action="@{/login}" method="post" class="mb-0">
                         <div class="mb-3">
-                            <label class="form-label">Username</label>
-                            <input type="text" name="username" class="form-control">
+                            <label for="username" class="form-label">Username</label>
+                            <input id="username" name="username" type="text"
+                                   class="form-control" placeholder="Enter your username" autofocus>
                         </div>
+
                         <div class="mb-3">
-                            <label class="form-label">Password</label>
-                            <input type="password" name="password" class="form-control">
+                            <label for="password" class="form-label">Password</label>
+                            <input id="password" name="password" type="password"
+                                   class="form-control" placeholder="Enter your password">
                         </div>
-                        <button class="btn btn-primary">Login</button>
+
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary" style="background:#1f497d">Log in</button>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -464,7 +507,7 @@ spring.h2.console.enabled=true
 
 - Formulaire très simple pour l'authentification.
 - Soumis vers l'endpoint `/login` (Spring Security gère l'authentification par défaut).
-- Peut être amélioré (messages d'erreur, lien d'inscription, CSRF token si non automatique par Thymeleaf).
+- Page décorée automatiquement par `layout1.html`
 
 ---
 
@@ -475,32 +518,57 @@ spring.h2.console.enabled=true
 <html lang="en"
       xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="layout1"
->
+      layout:decorate="layout1">
 <head>
     <meta charset="UTF-8">
-    <title>Products</title>
+    <title th:text="${product.id} != null ? 'Edit product' : 'New product'">Product</title>
 </head>
 <body>
 <div class="p-3" layout:fragment="content1">
-    <form method="post" th:action="@{/admin/saveProduct}">
-        <div class="mb-3">
-            <label class="form-label">Name</label>
-            <input class="form-control" type="text" name="name" th:value="${product.name}">
-            <span class="text-danger" th:errors="${product.name}"></span>
+    <div class="row justify-content-center">
+        <div class="col-12 col-md-8">
+            <div class="card card-compact">
+                <div class="card-header">
+                    <h5 class="mb-0" th:text="${product.id} != null ? 'Edit product' : 'New product'">New product</h5>
+                </div>
+                <div class="card-body">
+                    <form th:action="@{/admin/saveProduct}" method="post" th:object="${product}">
+                        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+                        <input type="hidden" th:if="${product.id != null}" th:field="*{id}"/>
+
+                        <div class="mb-3">
+                            <label class="form-label">Name</label>
+                            <input class="form-control" type="text" th:field="*{name}" placeholder="Product name"/>
+                            <div class="invalid-feedback d-block" th:if="${#fields.hasErrors('name')}"
+                                 th:errors="*{name}"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Price</label>
+                            <input class="form-control" type="number" step="0.01" th:field="*{price}"
+                                   placeholder="0.00"/>
+                            <div class="invalid-feedback d-block" th:if="${#fields.hasErrors('price')}"
+                                 th:errors="*{price}"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Quantity</label>
+                            <input class="form-control" type="number" th:field="*{quantity}" placeholder="0"/>
+                            <div class="invalid-feedback d-block" th:if="${#fields.hasErrors('quantity')}"
+                                 th:errors="*{quantity}"></div>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <a class="btn btn-outline-secondary" th:href="@{/user/index}">Back</a>
+                            <button type="submit" class="btn btn-primary">Save</button>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
         </div>
-        <div class="mb-3">
-            <label class="form-label">Price</label>
-            <input class="form-control" type="text" name="price" th:value="${product.price}">
-            <span class="text-danger" th:errors="${product.price}"></span>
-        </div>
-        <div class="mb-3">
-            <label class="form-label">Quantity</label>
-            <input class="form-control" type="text" name="quantity" th:value="${product.quantity}">
-            <span class="text-danger" th:errors="${product.quantity}"></span>
-        </div>
-        <button type="submit" class="btn btn-primary">Save</button>
-    </form>
+    </div>
 </div>
 </body>
 </html>
@@ -508,7 +576,7 @@ spring.h2.console.enabled=true
 
 **Explication :**
 
-- Formulaire d'ajout de produit.
+- Formulaire utilisé pour **l’ajout** et **la modification** grâce au même template
 - Utilise `th:value` pour pré-remplir les champs en cas d'erreurs de validation.
 - `th:errors` affiche les erreurs liées aux contraintes de validation.
 
@@ -550,38 +618,60 @@ spring.h2.console.enabled=true
       xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
-      layout:decorate="layout1"
->
+      layout:decorate="layout1">
 <head>
     <meta charset="UTF-8">
     <title>Products</title>
 </head>
 <body>
 <div class="p-3" layout:fragment="content1">
-    <div class="p-3" sec:authorize="hasRole('ADMIN')">
-        <a class="btn btn-primary" th:href="@{/admin/newProduct}">New Product</a>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <div>
+            <h3 class="mb-0">List of all products</h3>
+        </div>
+        <div sec:authorize="hasRole('ADMIN')">
+            <a class="btn btn-primary" th:href="@{/admin/newProduct}">New Product</a>
+        </div>
     </div>
-    <table class="table">
-        <thead>
-        <th>ID</th>
-        <th>Name</th>
-        <th>Price</th>
-        <th>Quantity</th>
-        </thead>
-        <tbody>
-        <tr th:each="p:${productList}">
-            <td th:text="${p.id}"></td>
-            <td th:text="${p.name}"></td>
-            <td th:text="${p.price}"></td>
-            <td th:text="${p.quantity}"></td>
-            <td sec:authorize="hasRole('ADMIN')">
-                <form method="post" th:action="@{/admin/delete(id=${p.id})}">
-                    <button type="submit" class="btn btn-danger">Delete</button>
-                </form>
-            </td>
-        </tr>
-        </tbody>
-    </table>
+
+    <div class="card card-compact">
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th class="text-end">Price</th>
+                    <th class="text-end">Quantity</th>
+                    <th class="text-end" sec:authorize="hasRole('ADMIN')">Actions</th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr th:each="p : ${productList}">
+                    <td th:text="${p.id}">1</td>
+                    <td th:text="${p.name}">Example</td>
+                    <td class="text-end" th:text="${p.price}">0.0</td>
+                    <td class="text-end" th:text="${p.quantity}">0</td>
+                    <td class="text-end table-actions" sec:authorize="hasRole('ADMIN')">
+                        <div sec:authorize="hasRole('ADMIN')" class="d-inline-flex">
+                            <a th:href="@{|/admin/edit/${p.id}|}"
+                               class="btn btn-sm me-1 btn-warning text-white">Edit</a>
+                            <form th:action="@{/admin/delete}" method="post" th:object="${p}"
+                                  onsubmit="return confirm('Delete product?');">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <input type="hidden" name="id" th:value="${p.id}"/>
+                                <button type="submit" class="btn btn-sm btn-danger">Delete</button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(productList)}">
+                    <td colspan="5" class="text-center muted">No products found.</td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 </body>
 </html>
@@ -589,9 +679,9 @@ spring.h2.console.enabled=true
 
 **Explication :**
 
-- Vue listant les produits via l'attribut `productList` injecté par le contrôleur.
-- Boutons d'action (`New Product`, `Delete`) visibles uniquement pour les utilisateurs avec le rôle `ADMIN`.
-- `th:each` itère sur la collection de produits.
+- Tableau dynamique listant tous les produits
+- Les actions Edit / Delete sont affichées uniquement pour le rôle ADMIN
+- Protection CSRF intégrée dans les formulaires
 
 ---
 
@@ -755,11 +845,14 @@ mvn spring-boot:run
 
 ---
 
-## 📊 Exemple de fonctionnement
+## 📸 Captures d'écran
 
-- L’utilisateur `user1` peut uniquement consulter la liste des produits.
-- L’administrateur `admin` peut ajouter ou supprimer des produits.
-- Les accès non autorisés redirigent vers la page `notAuthorized.html`.
+![Login](screenshots/Screenshot 2025-11-26 111911.jpg)
+![ProductsAdmin](screenshots/Screenshot 2025-11-26 111952.jpg)
+![Add](screenshots/Screenshot 2025-11-26 112110.jpg)
+![Edit](screenshots/Screenshot 2025-11-26 112256.jpg)
+![Delete](screenshots/Screenshot 2025-11-26 112323.jpg)
+![ProductsUser](screenshots/Screenshot 2025-11-26 112348.jpg)
 
 ---
 

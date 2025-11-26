@@ -1,62 +1,87 @@
 <!DOCTYPE html>
-<html lang="en"
-      xmlns:th="http://www.thymeleaf.org"
+<html lang="en" xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
->
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
-    <meta charset="UTF-8">
-    <title>Products</title>
-    <link rel="stylesheet" type="text/css" href="/webjars/bootstrap/5.3.5/css/bootstrap.min.css">
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1"/>
+    <title th:text="${pageTitle} ?: 'Products Management'">Products</title>
+    <link rel="stylesheet" href="/webjars/bootstrap/5.3.5/css/bootstrap.min.css"/>
+    <style>
+        body {
+            font-family: "Georgia", serif;
+            background: #f6f7fb;
+        }
+
+        .navbar-brand {
+            font-weight: 600;
+            letter-spacing: .5px;
+        }
+
+        .page-header {
+            margin-top: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .card-compact {
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .table-actions button {
+            margin-right: .35rem;
+        }
+
+        .muted {
+            color: #6c757d;
+        }
+    </style>
     <script src="/webjars/bootstrap/5.3.5/js/bootstrap.bundle.js"></script>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar navbar-dark bg-primary">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="#">Navbar</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+<nav class="navbar navbar-expand-lg navbar-dark" style="background:#1f497d;">
+    <div class="container">
+        <a class="navbar-brand" th:href="@{/}">Product Management</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMain">
             <span class="navbar-toggler-icon"></span>
         </button>
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                <li class="nav-item">
-                    <a class="nav-link active" aria-current="page" th:href="@{/}" >Home</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" th:href="@{/user/index}">Products</a>
-                </li>
+        <div class="collapse navbar-collapse" id="navMain">
+            <ul class="navbar-nav ms-auto">
                 <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        Dropdown
+                    <a class="nav-link dropdown-toggle" href="#" id="userMenu" role="button" data-bs-toggle="dropdown">
+                        <span sec:authentication="name">User</span>
                     </a>
-                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
-                        <li><a class="dropdown-item" href="#">Action</a></li>
-                        <li><a class="dropdown-item" href="#">Another action</a></li>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="#">Something else here</a></li>
-                    </ul>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link disabled" href="#" tabindex="-1" aria-disabled="true">Disabled</a>
-                </li>
-            </ul>
-            <ul class="navbar-nav">
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown2" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <span sec:authentication="name"></span>
-                    </a>
-                    <ul class="dropdown-menu" aria-labelledby="navbarDropdown">
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
                         <li><a class="dropdown-item" th:href="@{/logout}">Logout</a></li>
                     </ul>
                 </li>
             </ul>
-
         </div>
     </div>
 </nav>
-  <div layout:fragment="content1">
 
-  </div>
-  <footer></footer>
+<main class="container">
+    <header class="page-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h1 th:text="${pageTitle} ?: 'Products'">Products</h1>
+                <p class="muted">Manage product catalog — add, edit or remove entries.</p>
+            </div>
+            <div>
+                <div th:if="${successMessage}" class="alert alert-success" th:text="${successMessage}"></div>
+                <div th:if="${errorMessage}" class="alert alert-danger" th:text="${errorMessage}"></div>
+            </div>
+        </div>
+    </header>
+
+    <div layout:fragment="content1"></div>
+
+    <footer class="mt-5 mb-4 text-muted small">
+        <div class="d-flex justify-content-between">
+            <div>© <span th:text="${T(java.time.Year).now().value}"></span> Zakaria Bouzouba</div>
+            <div>Spring Boot + Thymeleaf</div>
+        </div>
+    </footer>
+</main>
 </body>
 </html>
