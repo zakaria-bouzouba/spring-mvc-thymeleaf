@@ -847,12 +847,12 @@ mvn spring-boot:run
 
 ## 📸 Captures d'écran
 
-![Login](screenshots/Screenshot 2025-11-26 111911.jpg)
-![ProductsAdmin](screenshots/Screenshot 2025-11-26 111952.jpg)
-![Add](screenshots/Screenshot 2025-11-26 112110.jpg)
-![Edit](screenshots/Screenshot 2025-11-26 112256.jpg)
-![Delete](screenshots/Screenshot 2025-11-26 112323.jpg)
-![ProductsUser](screenshots/Screenshot 2025-11-26 112348.jpg)
+![Login](screenshots/login.jpg )
+![ProductsAdmin](screenshots/products-admin.jpg)
+![Add](screenshots/add.jpg)
+![Edit](screenshots/edit.jpg)
+![Delete](screenshots/delete.jpg)
+![ProductsUser](screenshots/products-user.jpg)
 
 ---
 
